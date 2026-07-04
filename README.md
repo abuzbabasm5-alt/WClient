@@ -1,81 +1,93 @@
-
 # WClient - #1 Utility Client for MCPE
-
 
 ![MCPE](https://img.shields.io/badge/Minecraft-Bedrock-green?logo=minecraft&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-MCPE-orange)
 ![Kotlin](https://img.shields.io/badge/Code-Kotlin-7F52FF?logo=kotlin&logoColor=white)
 ![License](https://img.shields.io/badge/License-GNU%20GPLv3-blue?logo=gnu&logoColor=white)
 
-**WClient** is a modular, high‑performance utility client designed for **Minecraft Bedrock Edition**. Built with a strong focus on stability, packet‑level control, and extensibility, WClient delivers advanced combat, movement, and visual enhancements while maintaining a clean, maintainable architecture.
+**WClient** is a modular, high-performance utility client designed for **Minecraft Bedrock Edition**. Built with a strong focus on stability, packet-level control, and extensibility, WClient delivers advanced combat, movement, and visual enhancements while maintaining a clean, maintainable architecture.
 
 WClient does **not** modify game memory directly and is engineered for compatibility across multiple Bedrock environments.
 
----
+> [!CAUTION]
+> **This isn't the end.**
+>
+> It's just no longer public.
+> WClient is actively developed behind closed doors.
+> This repository stays online as a legacy archive.
+
 ## Our Team
 
-Prajwal (Founder & Developer) 
+Prajwal (Founder & Developer)
 
 Flexy H6X (Helper)
 
 RA Legend (Supporter)
 
----
 ## Acknowledgements
 
-Special thanks to the developers and open‑source projects that inspired this client, including **MuCuteClient**, **ProtoHax**, **Team-Nova** and **Project Lumina**. Their work formed the foundation for many architectural and conceptual improvements in WClient.
-
----
+Special thanks to the developers and open-source projects that inspired this client, including **MuCuteClient**, **ProtoHax**, **Team-Nova**. Their work formed the foundation for many architectural and conceptual improvements in WClient.
 
 ## Features
 
 ### Combat
 
-* **Killaura** - TP Aura, Criticals, APS/CPS limiters, strafing logic, auto‑weapon switching, priority targeting (Nearest, Lowest HP), invisibility checks, team detection.
-* **WAura** - Classic, highly configurable Killaura with multiple rotation and attack strategies.
-* **OPFightBot** - Automated combat logic with predictive strafing and optional teleport mechanics.
-* **EnemyHunter** - Auto Kills enemies brutally.
+- Killaura
+- WAura
+- TriggerBot
+- OPFightBot
+- EnemyHunter
+- AutoFight
+- AutoTotem
+- AntiCrystal
+- Criticals
+- Hitbox
 
 ### Movement
 
-* **MotionFly** - Horizontal/vertical speed control, anti‑kick systems, anti‑noclip bypasses.
-* **Speed** - Stable high‑speed movement adjustments for multiplayer environments.
-* **PlayerTP** - Teleport to enemies at specific distance.
+- MotionFly
+- Speed
+- PlayerTP
+- Scaffold
+- Phase
 
 ### Visual
 
-* **ESP** - Player, Nametags and armour highlighting with optimized render performance.
-* **DamageText** - Real‑time damage indicators and tracers.
-* **Smooth Zoom** - Adjustable zoom with smooth interpolation.
+- ESP
+- Nametags
+- Armour ESP
+- Tracer
+- DamageText
 
 ### Utility
 
-* **Auto Armour** - Automatically equips the best armor available.
-* **Auto Disconnect** - Automatically disconnects when low health.
-
----
+- Auto Armor
+- Auto Disconnect
+- Inventory Helper
+- Pop Counter
+- Add Friend
+- Friend Manager
+- Config Import/Export
+- Crash Reporter
+- GameMode Switcher
 
 ## Platform Support
 
-WClient is primarily developed and tested for **Android**, but can interface with other platforms using MITM‑style packet interception depending on setup.
+WClient is primarily developed and tested for **Android**, but can interface with other platforms using MITM-style packet interception depending on setup.
 
 Supported:
 
 * Android (primary)
 * Additional platforms may work depending on network configuration
 
----
-
 ## Module Categories
 
 WClient modules are organized into the following categories:
 
-* **Combat** – PvP enhancements and automated combat logic
-* **Motion** – Mobility and speed modules
-* **Visual** – Rendering and awareness tools
-* **Misc** – General gameplay improvements
-
----
+* **Combat** - PvP enhancements and automated combat logic
+* **Motion** - Mobility and speed modules
+* **Visual** - Rendering and awareness tools
+* **Misc** - General gameplay improvements
 
 ## GUI and Configuration
 
@@ -91,8 +103,6 @@ Example:
   }
 }
 ```
-
----
 
 ## License
 
@@ -111,11 +121,9 @@ WClient is licensed under the **GNU General Public License v3.0 (GPLv3)**.
 
 Full license text: [https://www.gnu.org/licenses/gpl-3.0.en.html](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
----
-
 ## Disclaimer of Warranty
 
-This software is provided **“AS IS”**, without warranty of any kind, express or implied, including but not limited to fitness for a particular purpose or non‑infringement.
+This software is provided **“AS IS”**, without warranty of any kind, express or implied, including but not limited to fitness for a particular purpose or non-infringement.
 
 ## Limitation of Liability
 
@@ -126,20 +134,14 @@ In no event shall the authors be liable for any damages arising from the use of 
 This project is intended **solely for educational and research purposes**.
 Users are responsible for ensuring compliance with local laws and server rules.
 
----
-
 ## Contributions
 
 Contributions are welcome. Bug reports, feature suggestions, and pull requests help improve WClient.
-
----
 
 ## Community & Support
 
 Join the WClient community for support, updates, and discussions:
 
 Discord: [https://discord.gg/wclient](https://discord.gg/jVWPuDvdRX)
-
----
 
 *WClient is not affiliated with Mojang Studios or Microsoft.*
