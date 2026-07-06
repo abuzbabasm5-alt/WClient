@@ -7,7 +7,16 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 
 class AutoMineModule : Module("auto_mine", ModuleCategory.World) {
 
+    enum class OreMode { 
+        ALL,
+        DIAMONDS,
+        IRON,
+        GOLD,
+        EMERALD
+    }
+
     private val speed by intValue("speed", 8, 1..20)
+    private val oreMode by enumValue("ore_mode", OreMode.ALL, OreMode::class.java)
     private var breakCounter = 0
 
     override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
