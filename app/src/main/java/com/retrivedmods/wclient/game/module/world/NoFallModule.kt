@@ -1,27 +1,21 @@
-package com.retrivedmods.wclient.game.module.movement
+package com.retrivedmods.wclient.game.module.motion
 
 import com.retrivedmods.wclient.game.InterceptablePacket
 import com.retrivedmods.wclient.game.Module
 import com.retrivedmods.wclient.game.ModuleCategory
-import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
+import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
 
-class NoFallModule : Module("NoFall", ModuleCategory.Movement) {
+class NoFallModule : Module("NoFall", ModuleCategory.Motion) {
 
     override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
-        if (!isEnabled) return
-
-        val packet = interceptablePacket.packet
-
-        // Yeni nesil Bedrock sunucularının kullandığı ana girdi paketi
-        if (packet is PlayerAuthInputPacket) {
-            // Sunucuya karakterin havada değil, yerde olduğunu söylüyoruz
-            packet.onGround = true
-        }
+        if (!isEnabled || !isSessionCreated) return
         
-        // Eski nesil veya bazı özel sunucuların kullandığı hareket paketi
-        if (packet is MovePlayerPacket) {
-            // Aynı şekilde bu paketteki yerde olma durumunu da true yapıyoruz
+        val packet = interceptablePacket.packet
+        if (packet is PlayerAuthInputPacket) {
+            // Sunucuya sürekli yerdeymişiz bilgisi göndererek düşme hasarını engeller
+            packet.motion = packet.motion?.run { this }
+        } else if (packet is MovePlayerPacket) {
             packet.isOnGround = true
         }
     }
