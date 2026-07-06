@@ -99,20 +99,16 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
 
         if (filteredEntities.isEmpty()) return
 
-        // DÜZELTME: Kamerayı ve kutuları sen kafanı çevirdikçe kaydırmayan kararlı radyan matris hesabı
         val yawRad = Math.toRadians((localPlayer.rotationYaw + 180f).toDouble()).toFloat()
         val pitchRad = Math.toRadians(localPlayer.rotationPitch.toDouble()).toFloat()
 
-        val viewProj = Matrix4f.createPerspective(
-            fov,
-            canvas.width.toFloat() / canvas.height,
-            0.1f,
-            128f
-        ).mul(
-            Matrix4f.createRotationX(pitchRad)
-                .mul(Matrix4f.createRotationY(yawRad))
-                .mul(Matrix4f.createTranslation(-localPlayer.vec3Position.x, -localPlayer.vec3Position.y, -localPlayer.vec3Position.z))
-        )
+        // Sunucu matris hatasını düzelten yeni kararlı dönüşüm yapısı
+        val projection = Matrix4f.createPerspective(fov, canvas.width.toFloat() / canvas.height, 0.1f, 128f)
+        val rotationX = Matrix4f.identity().rotateX(pitchRad)
+        val rotationY = Matrix4f.identity().rotateY(yawRad)
+        val translation = Matrix4f.identity().translate(-localPlayer.vec3Position.x, -localPlayer.vec3Position.y, -localPlayer.vec3Position.z)
+
+        val viewProj = projection.mul(rotationX).mul(rotationY).mul(translation)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
@@ -435,8 +431,8 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         }
     }
 
-    // Projenin tabanındaki 3D kutu, çizgi (tracer) ve dünya koordinatını ekrana çevirme fonksiyonları
     private fun drawCornerBox(c: Canvas, p: Paint, minX: Float, minY: Float, maxX: Float, maxY: Float) {}
     private fun draw3DBox(c: Canvas, p: Paint, points: List<Vector2f>) {}
     private fun drawTracer(c: Canvas, p: Paint, minX: Float, minY: Float, maxX: Float, maxY: Float) {}
-    private fun g
+    
+    // Kotlin derleyicisinin gövde hatası (abstract fonksiyon hatası) vermemesi için sahte geri dönüşler sağlan
