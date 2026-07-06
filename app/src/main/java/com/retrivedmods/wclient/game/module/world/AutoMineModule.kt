@@ -1,50 +1,30 @@
 package com.retrivedmods.wclient.game.module.player
 
-import com.retrivedmods.wclient.game.InterceptablePacket
 import com.retrivedmods.wclient.game.Module
 import com.retrivedmods.wclient.game.ModuleCategory
-import org.cloudburstmc.math.vector.Vector3i
-import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
-import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
+import com.retrivedmods.wclient.game.entity.Player
 
-class AutoMineModule : Module("AutoMine", ModuleCategory.Player) {
+class AutoMineModule : Module("AutoMine", ModuleCategory.Misc) {
 
-    // Kazılacak örnek hedef koordinat (Test amaçlı, geliştirilmesi gerekir)
-    private var targetBlockPos: Vector3i = Vector3i.from(0, 60, 0)
-    private var isMining = false
-
-    override fun onEnabled() {
-        super.onEnabled()
-        isMining = true
-        // Modül açıldığında kazma işlemini başlat
-        sendMineAction(PlayerActionType.START_BREAK, targetBlockPos, 0)
+    enum class TargetOre(val blockName: String) {
+        All("all_ores"),
+        Diamond("diamond_ore"),
+        Gold("gold_ore"),
+        Iron("iron_ore"),
+        AncientDebris("ancient_debris"),
+        Coal("coal_ore")
     }
 
-    override fun onDisabled() {
-        super.onDisabled()
-        if (isMining) {
-            // Modül kapatıldığında kazmayı iptal et
-            sendMineAction(PlayerActionType.ABORT_BREAK, targetBlockPos, 0)
-            isMining = false
-        }
-    }
+    private val targetOre by enumValue("target_ore", TargetOre.Diamond, TargetOre::class.java)
+    private val mineRadius by floatValue("radius", 4.5f, 1f..7f)
+    private val autoSwitchPickaxe by boolValue("auto_pickaxe", true)
 
-    override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
-        if (!isEnabled || !isMining) return
+    override fun onEnabled() {}
+    override fun onDisabled() {}
 
-        // Blok kırma sürecini devam ettirmek için sürekli ağ paketlerini güncel tutabilirsiniz
-        // Gelişmiş versiyonlarda oyuncunun baktığı blok (raycast) koordinatları dinamik olarak alınmalıdır.
-    }
-
-    private fun sendMineAction(actionType: PlayerActionType, pos: Vector3i, face: Int) {
-        if (!isSessionCreated) return
-
-        val actionPacket = PlayerActionPacket()
-        actionPacket.action = actionType
-        actionPacket.blockPosition = pos
-        actionPacket.face = face
-        actionPacket.runtimeEntityId = 0 // Yerel oyuncu ID'si ile senkronize edilmelidir
-
-        session.serverBound(actionPacket)
+    fun onTick() {
+        if (!isEnabled || !isSessionCreated) return
+        val currentTarget = targetOre
+        val radius = mineRadius
     }
 }
