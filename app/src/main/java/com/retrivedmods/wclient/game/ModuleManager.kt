@@ -53,6 +53,11 @@ import com.retrivedmods.wclient.game.module.motion.PlayerTPModule
 import com.retrivedmods.wclient.game.module.motion.SpeedModule
 import com.retrivedmods.wclient.game.module.motion.SpiderModule
 import com.retrivedmods.wclient.game.module.motion.SprintModule
+
+// EKLEDİĞİMİZ IMPORTERLAR
+import com.retrivedmods.wclient.game.module.motion.NoFallModule
+import com.retrivedmods.wclient.game.module.player.AutoMineModule
+
 import com.retrivedmods.wclient.game.module.visual.CrosshairModule
 import com.retrivedmods.wclient.game.module.visual.DamageTextModule
 import com.retrivedmods.wclient.game.module.visual.ESPModule
@@ -65,6 +70,7 @@ import com.retrivedmods.wclient.game.module.visual.SpeedDisplayModule
 import com.retrivedmods.wclient.game.module.visual.WorldStateModule
 import com.retrivedmods.wclient.game.module.visual.ZoomModule
 import com.retrivedmods.wclient.game.module.visual.TargetHudModule
+import com.retrivedmods.wclient.game.module.visual.AutoEzzModule
 import com.retrivedmods.wclient.game.module.world.FreeCameraModule
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -76,7 +82,6 @@ import java.io.File
 object ModuleManager {
 
     private val _modules: MutableList<Module> = ArrayList()
-
     val modules: List<Module> = _modules
 
     private val json = Json {
@@ -97,7 +102,6 @@ object ModuleManager {
             add(AutoHvHModule())
             add(EnemyHunterModule())
             add(AntiKnockbackModule())
-
             add(AntiCrystalModule())
             add(HitAndRunModule())
             add(HitboxModule())
@@ -118,6 +122,7 @@ object ModuleManager {
             add(AutoWalkModule())
             add(AntiAFKModule())
             add(SpiderModule())
+            add(NoFallModule()) // NoFall buraya eklendi (Motion kategorisi)
 
             // Visual
             add(DamageTextModule())
@@ -133,6 +138,7 @@ object ModuleManager {
             add(CrosshairModule())
             add(TargetHudModule())
             add(FullbrightModule())
+            add(AutoEzzModule())
 
             // World
             add(FreeCameraModule())
@@ -143,7 +149,6 @@ object ModuleManager {
             add(AntiDebuffModule())
 
             // Misc
-
             add(AutoDisconnectModule())
             add(ArrayListModule())
             add(ToggleSoundModule())
@@ -159,56 +164,37 @@ object ModuleManager {
             add(FakeDeathModule())
             add(FakeXPModule())
             add(MinerModule())
+            add(AutoMineModule()) // AutoMine buraya eklendi (Misc/Player listesinin sonuna)
         }
     }
 
     fun saveConfig() {
-
-        if (!AppContext.isInitialized) {
-            return
-        }
-
+        if (!AppContext.isInitialized) return
         val configsDir = AppContext.instance.filesDir.resolve("configs")
         configsDir.mkdirs()
-
         val config = configsDir.resolve("UserConfig.json")
         val jsonObject = buildJsonObject {
             put("modules", buildJsonObject {
                 _modules.forEach {
-                    if (it.private) {
-                        return@forEach
-                    }
+                    if (it.private) return@forEach
                     put(it.name, it.toJson())
                 }
             })
         }
-
         config.writeText(json.encodeToString(JsonObject.serializer(), jsonObject))
     }
 
     fun loadConfig() {
-
-        if (!AppContext.isInitialized) {
-            return
-        }
-
+        if (!AppContext.isInitialized) return
         val configsDir = AppContext.instance.filesDir.resolve("configs")
         configsDir.mkdirs()
-
         val config = configsDir.resolve("UserConfig.json")
-        if (!config.exists()) {
-            return
-        }
-
+        if (!config.exists()) return
         val jsonString = config.readText()
-        if (jsonString.isEmpty()) {
-            return
-        }
-
+        if (jsonString.isEmpty()) return
         try {
             val jsonObject = json.parseToJsonElement(jsonString).jsonObject
             val modules = jsonObject["modules"]?.jsonObject ?: return
-
             _modules.forEach { module ->
                 (modules[module.name] as? JsonObject)?.let {
                     module.fromJson(it)
@@ -223,9 +209,7 @@ object ModuleManager {
         val jsonObject = buildJsonObject {
             put("modules", buildJsonObject {
                 _modules.forEach {
-                    if (it.private) {
-                        return@forEach
-                    }
+                    if (it.private) return@forEach
                     put(it.name, it.toJson())
                 }
             })
@@ -237,12 +221,9 @@ object ModuleManager {
         try {
             val jsonObject = json.parseToJsonElement(configStr).jsonObject
             val modules = jsonObject["modules"]?.jsonObject ?: return
-
             _modules.forEach { module ->
                 modules[module.name]?.let {
-                    if (it is JsonObject) {
-                        module.fromJson(it)
-                    }
+                    if (it is JsonObject) module.fromJson(it)
                 }
             }
         } catch (e: Exception) {
@@ -259,7 +240,6 @@ object ModuleManager {
                 configsDir?.mkdirs()
                 File(configsDir, if (filePath.endsWith(".json")) filePath else "$filePath.json")
             }
-
             file.parentFile?.mkdirs()
             file.writeText(exportConfig())
             true
@@ -273,21 +253,10 @@ object ModuleManager {
         return try {
             val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-
-            val baseDir = if (documentsDir.exists() || documentsDir.mkdirs()) {
-                documentsDir
-            } else {
-                downloadsDir
-            }
-
+            val baseDir = if (documentsDir.exists() || documentsDir.mkdirs()) documentsDir else downloadsDir
             val wclientDir = File(baseDir, "WClient")
             val configsDir = File(wclientDir, "configs")
-
-            if (configsDir.exists() || configsDir.mkdirs()) {
-                configsDir
-            } else {
-                null
-            }
+            if (configsDir.exists() || configsDir.mkdirs()) configsDir else null
         } catch (e: Exception) {
             e.printStackTrace()
             null
