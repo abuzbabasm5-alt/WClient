@@ -36,11 +36,13 @@ import com.retrivedmods.wclient.game.module.misc.ChestStealerModule
 import com.retrivedmods.wclient.game.module.misc.SpammerModule
 import com.retrivedmods.wclient.game.module.misc.ToggleSoundModule
 import com.retrivedmods.wclient.game.module.misc.WaterMarkModule
+import com.retrivedmods.wclient.game.module.misc.NoFallModule
 import com.retrivedmods.wclient.game.module.world.AntiDebuffModule
 import com.retrivedmods.wclient.game.module.world.EffectsModule
 import com.retrivedmods.wclient.game.module.world.ParticlesModule
 import com.retrivedmods.wclient.game.module.world.TimeShiftModule
 import com.retrivedmods.wclient.game.module.world.WeatherControllerModule
+import com.retrivedmods.wclient.game.module.world.AutoMineModule
 import com.retrivedmods.wclient.game.module.motion.AirJumpModule
 import com.retrivedmods.wclient.game.module.motion.AntiAFKModule
 import com.retrivedmods.wclient.game.module.motion.AutoWalkModule
@@ -53,11 +55,6 @@ import com.retrivedmods.wclient.game.module.motion.PlayerTPModule
 import com.retrivedmods.wclient.game.module.motion.SpeedModule
 import com.retrivedmods.wclient.game.module.motion.SpiderModule
 import com.retrivedmods.wclient.game.module.motion.SprintModule
-
-// EKLEDİĞİMİZ IMPORTERLAR
-import com.retrivedmods.wclient.game.module.motion.NoFallModule
-import com.retrivedmods.wclient.game.module.player.AutoMineModule
-
 import com.retrivedmods.wclient.game.module.visual.CrosshairModule
 import com.retrivedmods.wclient.game.module.visual.DamageTextModule
 import com.retrivedmods.wclient.game.module.visual.ESPModule
@@ -122,7 +119,6 @@ object ModuleManager {
             add(AutoWalkModule())
             add(AntiAFKModule())
             add(SpiderModule())
-            add(NoFallModule()) // NoFall buraya eklendi (Motion kategorisi)
 
             // Visual
             add(DamageTextModule())
@@ -147,6 +143,7 @@ object ModuleManager {
             add(EffectsModule())
             add(ParticlesModule())
             add(AntiDebuffModule())
+            add(AutoMineModule())
 
             // Misc
             add(AutoDisconnectModule())
@@ -164,7 +161,7 @@ object ModuleManager {
             add(FakeDeathModule())
             add(FakeXPModule())
             add(MinerModule())
-            add(AutoMineModule()) // AutoMine buraya eklendi (Misc/Player listesinin sonuna)
+            add(NoFallModule())
         }
     }
 
