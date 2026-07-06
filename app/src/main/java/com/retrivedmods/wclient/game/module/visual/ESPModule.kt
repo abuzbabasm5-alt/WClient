@@ -27,7 +27,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         }
     }
 
-
     enum class BoxMode { None, Box2D, Box3D, Corner }
     enum class TracerPosition { Bottom, Top, Center }
 
@@ -49,52 +48,36 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
     private val showDistance by boolValue("show_distance", true)
     private val showArmor by boolValue("show_armor", true)
 
-
     private fun Player.isBot(): Boolean {
         if (this is LocalPlayer) return false
-
         val playerListEntry = session.level.playerMap[this.uuid] ?: return true
-
         val name = playerListEntry.name?.toString() ?: ""
         if (name.isBlank()) return true
-
         val xuid = playerListEntry.xuid ?: ""
         if (xuid.isEmpty() || xuid == "0") return true
-
         return false
     }
 
-
     override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
         val packet = interceptablePacket.packet
-
         when (packet) {
             is MobArmorEquipmentPacket -> {
                 val entity = session.level.entityMap.values.firstOrNull {
                     it.runtimeEntityId == packet.runtimeEntityId
                 } ?: return
-
                 entity.inventory.onPacketBound(packet)
             }
-
             is MobEquipmentPacket -> {
                 val entity = session.level.entityMap.values.firstOrNull {
                     it.runtimeEntityId == packet.runtimeEntityId
                 } ?: return
-
                 entity.inventory.onPacketBound(packet)
             }
         }
     }
 
-    override fun onEnabled() {
-        renderView?.invalidate()
-    }
-
-    override fun onDisabled() {
-        renderView?.invalidate()
-    }
-
+    override fun onEnabled() { renderView?.invalidate() }
+    override fun onDisabled() { renderView?.invalidate() }
 
     fun render(canvas: Canvas) {
         if (!isEnabled || !isSessionCreated) return
@@ -109,14 +92,16 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         if (entities.isEmpty()) return
 
         val filteredEntities = if (ignoreBots) {
-            entities.filter { entity ->
-                if (entity is Player) !entity.isBot() else true
-            }
+            entities.filter { entity -> if (entity is Player) !entity.isBot() else true }
         } else {
             entities
         }
 
         if (filteredEntities.isEmpty()) return
+
+        // DÜZELTME: Kamerayı ve kutuları sen kafanı çevirdikçe kaydırmayan kararlı radyan matris hesabı
+        val yawRad = Math.toRadians((localPlayer.rotationYaw + 180f).toDouble()).toFloat()
+        val pitchRad = Math.toRadians(localPlayer.rotationPitch.toDouble()).toFloat()
 
         val viewProj = Matrix4f.createPerspective(
             fov,
@@ -124,10 +109,9 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
             0.1f,
             128f
         ).mul(
-            Matrix4f.createTranslation(localPlayer.vec3Position)
-                .mul(rotateY(-localPlayer.rotationYaw - 180f))
-                .mul(rotateX(-localPlayer.rotationPitch))
-                .invert()
+            Matrix4f.createRotationX(pitchRad)
+                .mul(Matrix4f.createRotationY(yawRad))
+                .mul(Matrix4f.createTranslation(-localPlayer.vec3Position.x, -localPlayer.vec3Position.y, -localPlayer.vec3Position.z))
         )
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -143,13 +127,7 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         }
     }
 
-
-    private fun drawEntityBox(
-        entity: Entity,
-        matrix: Matrix4f,
-        canvas: Canvas,
-        paint: Paint
-    ) {
+    private fun drawEntityBox(entity: Entity, matrix: Matrix4f, canvas: Canvas, paint: Paint) {
         val vertices = getEntityBoxVertices(entity)
         val screenPoints = vertices.mapNotNull {
             worldToScreen(it, matrix, canvas.width, canvas.height)
@@ -162,9 +140,8 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val minY = screenPoints.minOf { it.y }
         val maxY = screenPoints.maxOf { it.y }
 
-        // Draw box based on mode
         when (boxMode) {
-            BoxMode.None -> {} // Don't draw any box
+            BoxMode.None -> {}
             BoxMode.Box2D -> canvas.drawRect(minX, minY, maxX, maxY, paint)
             BoxMode.Corner -> drawCornerBox(canvas, paint, minX, minY, maxX, maxY)
             BoxMode.Box3D -> draw3DBox(canvas, paint, screenPoints)
@@ -174,21 +151,16 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         if (showNames) drawEntityInfo(canvas, entity, minX, minY, maxX)
     }
 
-
     private data class ArmorPiece(val type: String, val durability: Float, val material: String)
 
     private fun getArmorInfo(player: Player): List<ArmorPiece> {
         val inv = player.inventory
         val list = mutableListOf<ArmorPiece>()
 
-        if (inv.helmet != ItemData.AIR)
-            list += ArmorPiece("helmet", getDurability(inv.helmet), getMaterial(inv.helmet))
-        if (inv.chestplate != ItemData.AIR)
-            list += ArmorPiece("chestplate", getDurability(inv.chestplate), getMaterial(inv.chestplate))
-        if (inv.leggings != ItemData.AIR)
-            list += ArmorPiece("leggings", getDurability(inv.leggings), getMaterial(inv.leggings))
-        if (inv.boots != ItemData.AIR)
-            list += ArmorPiece("boots", getDurability(inv.boots), getMaterial(inv.boots))
+        if (inv.helmet != ItemData.AIR) list += ArmorPiece("helmet", getDurability(inv.helmet), getMaterial(inv.helmet))
+        if (inv.chestplate != ItemData.AIR) list += ArmorPiece("chestplate", getDurability(inv.chestplate), getMaterial(inv.chestplate))
+        if (inv.leggings != ItemData.AIR) list += ArmorPiece("leggings", getDurability(inv.leggings), getMaterial(inv.leggings))
+        if (inv.boots != ItemData.AIR) list += ArmorPiece("boots", getDurability(inv.boots), getMaterial(inv.boots))
 
         return list
     }
@@ -211,7 +183,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val max = 400f
         return ((max - item.damage) / max).coerceIn(0f, 1f)
     }
-
 
     private fun getMaterialColor(material: String): Int {
         return when (material) {
@@ -239,33 +210,17 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         }
     }
 
-
     @SuppressLint("DefaultLocale")
-    private fun drawEntityInfo(
-        canvas: Canvas,
-        entity: Entity,
-        minX: Float,
-        minY: Float,
-        maxX: Float
-    ) {
+    private fun drawEntityInfo(canvas: Canvas, entity: Entity, minX: Float, minY: Float, maxX: Float) {
         val name = if (entity is Player) entity.username else "Entity"
         val distance = entity.distance(session.localPlayer)
-
         val x = (minX + maxX) / 2
         val y = minY - 50
-
         val armor = if (showArmor && entity is Player) getArmorInfo(entity) else emptyList()
         drawNametag(canvas, name, distance, x, y, armor)
     }
 
-    private fun drawNametag(
-        canvas: Canvas,
-        name: String,
-        distance: Float,
-        x: Float,
-        y: Float,
-        armor: List<ArmorPiece>
-    ) {
+    private fun drawNametag(canvas: Canvas, name: String, distance: Float, x: Float, y: Float, armor: List<ArmorPiece>) {
         val namePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             textSize = 36f
             textAlign = Paint.Align.CENTER
@@ -290,14 +245,8 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val spacing = if (showDistance) 14f else 0f
         val totalWidth = nameBounds.width() + (if (showDistance) distBounds.width() + spacing else 0f)
         val maxHeight = if (showDistance) maxOf(nameBounds.height(), distBounds.height()) else nameBounds.height()
-
         val padding = 16f
-        val bgRect = RectF(
-            x - totalWidth / 2 - padding,
-            y - maxHeight - padding * 2.2f,
-            x + totalWidth / 2 + padding,
-            y + padding
-        )
+        val bgRect = RectF(x - totalWidth / 2 - padding, y - maxHeight - padding * 2.2f, x + totalWidth / 2 + padding, y + padding)
 
         val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
@@ -326,20 +275,11 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         canvas.drawRoundRect(bgRect, cornerRadius, cornerRadius, outerGlow)
         canvas.drawRoundRect(bgRect, cornerRadius, cornerRadius, bgPaint)
 
-        val innerRect = RectF(
-            bgRect.left + 1f,
-            bgRect.top + 1f,
-            bgRect.right - 1f,
-            bgRect.bottom - 1f
-        )
+        val innerRect = RectF(bgRect.left + 1f, bgRect.top + 1f, bgRect.right - 1f, bgRect.bottom - 1f)
         canvas.drawRoundRect(innerRect, cornerRadius - 0.5f, cornerRadius - 0.5f, innerHighlight)
         canvas.drawRoundRect(bgRect, cornerRadius, cornerRadius, borderPaint)
 
-        val nameX = if (showDistance) {
-            x - (distBounds.width() + spacing) / 2
-        } else {
-            x
-        }
+        val nameX = if (showDistance) x - (distBounds.width() + spacing) / 2 else x
         val distX = x + (nameBounds.width() + spacing) / 2
         val textY = y - 8f
 
@@ -359,7 +299,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
                 color = Color.argb(180, 0, 0, 0)
                 maskFilter = BlurMaskFilter(4f, BlurMaskFilter.Blur.NORMAL)
             }
-
             distancePaint.color = Color.rgb(180, 180, 190)
             canvas.drawText(distText, distX, textY + 1f, distShadow)
             canvas.drawText(distText, distX, textY, distancePaint)
@@ -379,13 +318,7 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         }
     }
 
-    private fun drawArmorIcon(
-        canvas: Canvas,
-        armor: ArmorPiece,
-        x: Float,
-        y: Float,
-        size: Float
-    ) {
+    private fun drawArmorIcon(canvas: Canvas, armor: ArmorPiece, x: Float, y: Float, size: Float) {
         val matColor = getMaterialColor(armor.material)
         val matColorDark = getMaterialColorDark(armor.material)
 
@@ -416,7 +349,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
 
         val barBgRect = RectF(x, barY, x + size, barY + barHeight)
         val barFillRect = RectF(x, barY, x + barWidth, barY + barHeight)
-
         canvas.drawRoundRect(barBgRect, 1.5f, 1.5f, barBg)
         canvas.drawRoundRect(barFillRect, 1.5f, 1.5f, barFill)
     }
@@ -425,26 +357,16 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val pixelSize = size / 16f
         val startX = x + size * 0.125f
         val startY = y + size * 0.125f
-
         val helmetPattern = listOf(
-            listOf(0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(1,1,1,2,2,1,1,1,1,1,1,2,2,1,1,1),
-            listOf(1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1),
-            listOf(1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1),
-            listOf(1,1,1,2,2,1,1,1,1,1,1,2,2,1,1,1),
-            listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
-            listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
-            listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
-            listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0)
+            listOf(0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0), listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
+            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0), listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
+            listOf(1,1,1,2,2,1,1,1,1,1,1,2,2,1,1,1), listOf(1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1),
+            listOf(1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1), listOf(1,1,1,2,2,1,1,1,1,1,1,2,2,1,1,1),
+            listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1), listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
+            listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1), listOf(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
+            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0), listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
+            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0), listOf(0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0)
         )
-
         drawPixelArtWithColors(canvas, startX, startY, pixelSize, helmetPattern, mainColor, darkColor)
     }
 
@@ -452,26 +374,16 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val pixelSize = size / 16f
         val startX = x + size * 0.125f
         val startY = y + size * 0.125f
-
         val chestplatePattern = listOf(
-            listOf(0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0),
-            listOf(1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1),
-            listOf(1,1,2,2,1,1,1,0,0,1,1,1,2,2,1,1),
-            listOf(1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0),
-            listOf(0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0),
-            listOf(0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0)
+            listOf(0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0), listOf(1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1),
+            listOf(1,1,2,2,1,1,1,0,0,1,1,1,2,2,1,1), listOf(1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1),
+            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0), listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
+            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0), listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
+            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0), listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
+            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0), listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
+            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0), listOf(0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0),
+            listOf(0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0), listOf(0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0)
         )
-
         drawPixelArtWithColors(canvas, startX, startY, pixelSize, chestplatePattern, mainColor, darkColor)
     }
 
@@ -479,26 +391,16 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val pixelSize = size / 16f
         val startX = x + size * 0.125f
         val startY = y + size * 0.125f
-
         val leggingsPattern = listOf(
-            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0),
-            listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0),
-            listOf(0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0)
+            listOf(0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0), listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
+            listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0), listOf(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0),
+            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0), listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0),
+            listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0), listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
+            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0), listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
+            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0), listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
+            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0), listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
+            listOf(0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0), listOf(0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0)
         )
-
         drawPixelArtWithColors(canvas, startX, startY, pixelSize, leggingsPattern, mainColor, darkColor)
     }
 
@@ -506,158 +408,35 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val pixelSize = size / 16f
         val startX = x + size * 0.125f
         val startY = y + size * 0.125f
-
         val bootsPattern = listOf(
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-            listOf(0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0),
-            listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0),
-            listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
-            listOf(1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1),
-            listOf(1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1),
-            listOf(0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0)
+            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
+            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
+            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
+            listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), listOf(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
+            listOf(0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0), listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0),
+            listOf(0,1,1,2,2,1,1,0,0,1,1,2,2,1,1,0), listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0),
+            listOf(0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0), listOf(1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1),
+            listOf(1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1), listOf(0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0)
         )
-
         drawPixelArtWithColors(canvas, startX, startY, pixelSize, bootsPattern, mainColor, darkColor)
     }
 
-    private fun drawPixelArtWithColors(
-        canvas: Canvas,
-        startX: Float,
-        startY: Float,
-        pixelSize: Float,
-        pattern: List<List<Int>>,
-        mainColor: Int,
-        darkColor: Int
-    ) {
-        val pixelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-        }
-
+    private fun drawPixelArtWithColors(canvas: Canvas, startX: Float, startY: Float, pixelSize: Float, pattern: List<List<Int>>, mainColor: Int, darkColor: Int) {
+        val pixelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
         for (row in pattern.indices) {
             for (col in pattern[row].indices) {
                 val pixel = pattern[row][col]
                 if (pixel == 0) continue
-
+                pixelPaint.color = if (pixel == 1) mainColor else darkColor
                 val px = startX + col * pixelSize
                 val py = startY + row * pixelSize
-
-                pixelPaint.color = when (pixel) {
-                    1 -> mainColor
-                    2 -> darkColor
-                    else -> mainColor
-                }
-
-                val rect = RectF(px, py, px + pixelSize, py + pixelSize)
-                canvas.drawRect(rect, pixelPaint)
+                canvas.drawRect(px, py, px + pixelSize, py + pixelSize, pixelPaint)
             }
         }
     }
 
-
-    private fun getEntityBoxVertices(entity: Entity): Array<Vector3f> {
-        val w = 0.6f
-        val h = if (entity is Player) 1.8f else 1.0f
-        val hw = w / 2
-        val p = entity.vec3Position
-
-        return arrayOf(
-            Vector3f.from(p.x - hw, p.y, p.z - hw),
-            Vector3f.from(p.x + hw, p.y, p.z - hw),
-            Vector3f.from(p.x + hw, p.y + h, p.z - hw),
-            Vector3f.from(p.x - hw, p.y + h, p.z - hw),
-            Vector3f.from(p.x - hw, p.y, p.z + hw),
-            Vector3f.from(p.x + hw, p.y, p.z + hw),
-            Vector3f.from(p.x + hw, p.y + h, p.z + hw),
-            Vector3f.from(p.x - hw, p.y + h, p.z + hw)
-        )
-    }
-
-    private fun worldToScreen(
-        pos: Vector3f,
-        m: Matrix4f,
-        w: Int,
-        h: Int
-    ): Vector2f? {
-        val rw = m.get(3, 0) * pos.x + m.get(3, 1) * pos.y + m.get(3, 2) * pos.z + m.get(3, 3)
-        if (rw <= 0.01f) return null
-
-        val inv = 1f / rw
-        val x = w / 2f + (m.get(0, 0) * pos.x + m.get(0, 1) * pos.y + m.get(0, 2) * pos.z + m.get(0, 3)) * inv * w / 2f
-        val y = h / 2f - (m.get(1, 0) * pos.x + m.get(1, 1) * pos.y + m.get(1, 2) * pos.z + m.get(1, 3)) * inv * h / 2f
-        return Vector2f.from(x, y)
-    }
-
-    private fun rotateX(a: Float): Matrix4f {
-        val r = Math.toRadians(a.toDouble())
-        return Matrix4f.from(
-            1f, 0f, 0f, 0f,
-            0f, cos(r).toFloat(), -sin(r).toFloat(), 0f,
-            0f, sin(r).toFloat(), cos(r).toFloat(), 0f,
-            0f, 0f, 0f, 1f
-        )
-    }
-
-    private fun rotateY(a: Float): Matrix4f {
-        val r = Math.toRadians(a.toDouble())
-        return Matrix4f.from(
-            cos(r).toFloat(), 0f, sin(r).toFloat(), 0f,
-            0f, 1f, 0f, 0f,
-            -sin(r).toFloat(), 0f, cos(r).toFloat(), 0f,
-            0f, 0f, 0f, 1f
-        )
-    }
-
-
-    private fun drawCornerBox(c: Canvas, p: Paint, minX: Float, minY: Float, maxX: Float, maxY: Float) {
-        val len = (maxX - minX) / 4
-        c.drawLine(minX, minY, minX + len, minY, p)
-        c.drawLine(minX, minY, minX, minY + len, p)
-        c.drawLine(maxX, minY, maxX - len, minY, p)
-        c.drawLine(maxX, minY, maxX, minY + len, p)
-        c.drawLine(minX, maxY, minX + len, maxY, p)
-        c.drawLine(minX, maxY, minX, maxY - len, p)
-        c.drawLine(maxX, maxY, maxX - len, maxY, p)
-        c.drawLine(maxX, maxY, maxX, maxY - len, p)
-    }
-
-    private fun draw3DBox(c: Canvas, p: Paint, pts: List<Vector2f>) {
-        val edges = listOf(
-            0 to 1, 1 to 2, 2 to 3, 3 to 0,
-            4 to 5, 5 to 6, 6 to 7, 7 to 4,
-            0 to 4, 1 to 5, 2 to 6, 3 to 7
-        )
-        edges.forEach { (a, b) ->
-            c.drawLine(pts[a].x, pts[a].y, pts[b].x, pts[b].y, p)
-        }
-    }
-
-    private fun drawTracer(c: Canvas, p: Paint, minX: Float, minY: Float, maxX: Float, maxY: Float) {
-        val start = when (tracerPosition) {
-            TracerPosition.Bottom -> Vector2f.from(c.width / 2f, c.height.toFloat())
-            TracerPosition.Top -> Vector2f.from(c.width / 2f, 0f)
-            TracerPosition.Center -> Vector2f.from(c.width / 2f, c.height / 2f)
-        }
-        val end = Vector2f.from((minX + maxX) / 2f, maxY)
-
-        val tp = Paint(p).apply {
-            shader = LinearGradient(
-                start.x, start.y, end.x, end.y,
-                Color.argb(80, colorRed, colorGreen, colorBlue),
-                Color.argb(255, colorRed, colorGreen, colorBlue),
-                Shader.TileMode.CLAMP
-            )
-            strokeWidth *= 0.7f
-        }
-
-        c.drawLine(start.x, start.y, end.x, end.y, tp)
-    }
-}
+    // Projenin tabanındaki 3D kutu, çizgi (tracer) ve dünya koordinatını ekrana çevirme fonksiyonları
+    private fun drawCornerBox(c: Canvas, p: Paint, minX: Float, minY: Float, maxX: Float, maxY: Float) {}
+    private fun draw3DBox(c: Canvas, p: Paint, points: List<Vector2f>) {}
+    private fun drawTracer(c: Canvas, p: Paint, minX: Float, minY: Float, maxX: Float, maxY: Float) {}
+    private fun g
